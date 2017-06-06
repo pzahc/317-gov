@@ -73,6 +73,12 @@ HEADER_LIST = [
   TOTAL_CASH_5,
 ]
 
+def parseNumber(s):
+    if s != 'n.a.':
+        print s
+        return float(s.replace(',', ''))
+
+    return -1
 
 def mapHeaders(headers):
     head_map = {}
@@ -114,15 +120,19 @@ class Company(object):
     def __init__(self, row, map):
         self.name = row[map[NAME]]
         self.ticker = row[map[TICKER]]
-        self.op_rev = row[map[OP_REV]]
         self.state = row[map[STATE]]
-        self.employees = row[map[EMPLOYEES]]
-        self.market_cap = row[map[MARKET_CAP]]
         self.exchange = row[map[EXCHANGE]]
         self.num_shareholders = row[map[NUM_SHAREHOLDERS]]
         self.num_subsidiaries = row[map[NUM_SUBSIDIARIES]]
-        self.woman_owned = row[map[WOMAN_OWNED]] != "Yes"
-        self.minority_owned = row[map[MINORITY_OWNED]] != "Yes"
+        self.woman_owned = row[map[WOMAN_OWNED]] == "Yes"
+        self.minority_owned = row[map[MINORITY_OWNED]] == "Yes"
+
+
+        # Grab numbers and convert from strings
+        self.op_rev = parseNumber(row[map[OP_REV]])
+        self.market_cap = parseNumber(row[map[MARKET_CAP]])
+        self.employees = parseNumber(row[map[EMPLOYEES]])
+
         self.directors = []
         self.cp_score = 0
 
@@ -141,16 +151,17 @@ class Company(object):
             self.name,
             self.cp_score,
             self.ticker,
-            # self.op_rev,
-            # self.state,
-            # self.employees,
-            # self.market_cap,
+            self.op_rev,
+            self.state,
+            self.employees,
+            self.market_cap,
+            dirs
+
             # self.exchange,
             # self.num_shareholders,
             # self.num_subsidiaries,
             # self.woman_owned,
             # self.minority_owned,
-            dirs
         ]
 
 
@@ -184,9 +195,11 @@ def main():
 
     print "Total Directors:" + str(len(directors))
 
-    with open('317-tech-ready.csv', 'w') as bd_csv:
+    with open('317-tech-comps.csv', 'w') as bd_csv:
 
-        fieldnames = ['Company', 'Score', 'Ticker', 'Directors']
+        fieldnames = [
+            'Company', 'Score', 'Ticker', 'Op_Rev', 'State',
+            'Num_Employees', 'Market_Cap', 'Directors']
         writer = csv.writer(bd_csv)
         writer.writerow(fieldnames)
 

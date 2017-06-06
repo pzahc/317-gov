@@ -12,9 +12,9 @@ require(VGAM)
 
 
 
-data  <- read.csv("317-tech-ready.csv", stringsAsFactors=FALSE)
+data  <- read.csv("317-tech-comps.csv", stringsAsFactors=FALSE)
 attach(data)
-reg1 <- lm(Score ~ Company)
+reg1 <- lm(Market_Cap ~ State + Op_Rev + Num_Employees)
 summary(reg1)
 
 detach(data)
