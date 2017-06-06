@@ -14,13 +14,33 @@ require(VGAM)
 
 data  <- read.csv("317-tech-comps.csv", stringsAsFactors=FALSE)
 attach(data)
-reg1 <- lm(AVG_Tenure ~ AVG_Seats + Market_Cap + State + Op_Rev + Num_Employees + Sector)
-summary(reg1)
 
-reg2 <- lm(AVG_Seats ~ AVG_Tenure + Market_Cap + State + Op_Rev + Num_Employees + Sector)
-summary(reg2)
+# Create Output File
+write("", file = "Reults.txt", append = FALSE)
+dependents  <- list("AVG_Tenure", "AVG_Size", "Score")
 
-reg3 <- lm(Score ~ Market_Cap + State + Op_Rev + Num_Employees + Sector + CARG5)
-summary(reg3)
+for (d in dependents) {
+  write("\n\n#################################   ", file = "Reults.txt", append = TRUE)
+  write(d, file = "Reults.txt", append = TRUE)
+  write("#################################", file = "Reults.txt", append = TRUE)
+
+  depen <- eval(as.name(d))
+  reg <- lm(depen ~ Market_Cap + State + Op_Rev + Num_Employees + Sector +
+               CARG5 + M_OWNED + W_OWNED + Num_Employees + Assets + Total_Cash +
+               Profit_Margin)
+  s <- summary(reg)
+  capture.output(s, file = "Reults.txt", append = TRUE)
+
+  # file_name <- paste("img/", t, "_residual.png", sep = "")
+  # png(file_name)
+  # t_reg.res = resid(t_reg)
+  # title <- paste(t,": Win Streak Residual plot")
+  # plot(team_subset$WinStreak, t_reg.res, main=title,
+  #      xlab="WinStreak",
+  #      ylab="Residuals", col="blue")
+  # abline(a=0,b=0)
+  # dev.off()
+}
+
 
 detach(data)

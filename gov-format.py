@@ -81,7 +81,7 @@ HEADER_LIST = [
 
 
 def parseNumber(s):
-    if s != 'n.a.':
+    if s != 'n.a.' and s != 'n.s.' :
         return float(s.replace(',', ''))
 
     return -1
@@ -148,6 +148,12 @@ class Company(object):
         self.woman_owned = row[map[WOMAN_OWNED]] == "Yes"
         self.minority_owned = row[map[MINORITY_OWNED]] == "Yes"
 
+
+        # Finacials
+        self.assets = parseNumber(row[map[ASSETS_0]])
+        self.total_cash = parseNumber(row[map[TOTAL_CASH_0]])
+        self.profit_margin = parseNumber(row[map[PROFIT_MARGIN_0]])
+
         # Stock Calculations
         self.stock0 = parseNumber(row[map[STOCK_PRICE_0]])
         self.stock1 = parseNumber(row[map[STOCK_PRICE_1]])
@@ -162,10 +168,10 @@ class Company(object):
         self.employees = parseNumber(row[map[EMPLOYEES]])
 
         # Values to be Calculated Later
-        self.average_tenure = 0
-        self.average_seats = 0
+        self.average_tenure = 0.0
+        self.average_seats = 0.0
         self.board_size = 0
-        self.multi_500 = 0
+        self.average_prime_seats = 0.0
 
         self.directors = []
         self.cp_score = 0
@@ -174,23 +180,26 @@ class Company(object):
         self.directors.append(director)
 
     def analyze(self):
-        tenure_sum = 0
-        seats_sum = 0
-        salary_sum = 0
+        tenure_sum = 0.0
+        seats_sum = 0.0
+        salary_sum = 0.0
+        prime_seat_sum = 0.0
 
-
-        self.board_size = len(self.directors)
+        self.board_size = float(len(self.directors))
         for d in self.directors:
             tenure_sum += d.tenure
             seats_sum += d.num_boards
-            if len(d.companies) > 1:
-                # A director at this company is on multiple boards is this sample
-                self.multi_500 += len(d.companies)-1
-                # print d.name + ' : ' + str(self.multi_500) + ' : ' + str (len(d.companies))
+
+            prime_seat_sum += len(d.companies)
+            # if len(d.companies) > 1:
+            #     # A director at this company is on multiple boards is this sample
+            #     self.multi_500 += len(d.companies)-1
+            #     # print d.name + ' : ' + str(self.multi_500) + ' : ' + str (len(d.companies))
 
 
         self.average_tenure =  tenure_sum / self.board_size
         self.average_seats =  seats_sum / self.board_size
+        self.average_prime_seats =  prime_seat_sum / self.board_size
 
         multi500 = 0
 
@@ -201,7 +210,9 @@ class Company(object):
         seats_delta = abs(self.average_seats - TARGET_BOARD_OTHER_SEATS)
         tenure_delta = abs(self.average_tenure - TARGET_BOARD_TENURE)
         size_delta = abs(self.board_size - TARGET_BOARD_SIZE)
-        self.cp_score = 0.5*seats_delta + 0.5*tenure_delta + 0.3*size_delta - 0.5*self.multi_500
+
+
+        self.cp_score = 0.5*seats_delta + 0.5*tenure_delta + 0.3*size_delta - self.average_prime_seats
 
     def getCSVRow(self):
         dirs = ""
@@ -219,8 +230,13 @@ class Company(object):
             self.average_tenure,
             self.average_seats,
             self.sector,
-            self.multi_500,
+            self.average_prime_seats,
             self.CARG5,
+            self.minority_owned,
+            self.woman_owned,
+            self.assets,
+            self.total_cash,
+            self.profit_margin,
             dirs
 
             # self.exchange,
@@ -267,7 +283,8 @@ def main():
         fieldnames = [
             'Company', 'Score', 'Ticker', 'Op_Rev', 'State',
             'Num_Employees', 'Market_Cap', 'AVG_Tenure', 'AVG_Seats',
-            'Sector', 'Other_500', 'CARG5', 'Directors']
+            'Sector', 'AVG_Prime', 'CARG5', 'M_OWNED', 'W_OWNED',
+            'Assets', 'Total_Cash', 'Profit_Margin', 'Directors']
         writer = csv.writer(bd_csv)
         writer.writerow(fieldnames)
 
