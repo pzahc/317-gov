@@ -17,10 +17,13 @@ attach(data)
 
 # Create Output File
 write("", file = "Reults.txt", append = FALSE)
-dependents  <- list("AVG_Tenure", "AVG_Size", "Score")
+if (!dir.exists("img")) {
+  dir.create("img")
+}
 
+dependents  <- list("AVG_Tenure", "AVG_Seats", "Score")
 for (d in dependents) {
-  write("\n\n#################################   ", file = "Reults.txt", append = TRUE)
+  write("#################################", file = "Reults.txt", append = TRUE)
   write(d, file = "Reults.txt", append = TRUE)
   write("#################################", file = "Reults.txt", append = TRUE)
 
@@ -30,16 +33,17 @@ for (d in dependents) {
                Profit_Margin)
   s <- summary(reg)
   capture.output(s, file = "Reults.txt", append = TRUE)
+  write("\n\n", file = "Reults.txt", append = TRUE)
 
-  # file_name <- paste("img/", t, "_residual.png", sep = "")
-  # png(file_name)
-  # t_reg.res = resid(t_reg)
-  # title <- paste(t,": Win Streak Residual plot")
-  # plot(team_subset$WinStreak, t_reg.res, main=title,
-  #      xlab="WinStreak",
-  #      ylab="Residuals", col="blue")
-  # abline(a=0,b=0)
-  # dev.off()
+  file_name <- paste("img/", d, "_residual.png", sep = "")
+  png(file_name)
+  reg.res = resid(reg)
+  title <- paste(d,": Residual plot")
+  plot(data$CARG5, reg.res, main=title,
+       xlab="CARG",
+       ylab="Residuals", col="blue")
+  abline(a=0,b=0)
+  dev.off()
 }
 
 
