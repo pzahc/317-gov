@@ -20,7 +20,7 @@ summary(reg1)
 reg2 <- lm(AVG_Seats ~ AVG_Tenure + Market_Cap + State + Op_Rev + Num_Employees + Sector)
 summary(reg2)
 
-reg3 <- lm(CP_Score ~ Market_Cap + State + Op_Rev + Num_Employees + Sector)
+reg3 <- lm(Score ~ Market_Cap + State + Op_Rev + Num_Employees + Sector + CARG5)
 summary(reg3)
 
 detach(data)

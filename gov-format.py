@@ -148,6 +148,13 @@ class Company(object):
         self.woman_owned = row[map[WOMAN_OWNED]] == "Yes"
         self.minority_owned = row[map[MINORITY_OWNED]] == "Yes"
 
+        # Stock Calculations
+        self.stock0 = parseNumber(row[map[STOCK_PRICE_0]])
+        self.stock1 = parseNumber(row[map[STOCK_PRICE_1]])
+        self.stock5 = parseNumber(row[map[STOCK_PRICE_5]])
+        ratio = self.stock0/self.stock5
+        self.CARG5 = (pow(abs(ratio), 1.0/5.0)-1.0)*(ratio/abs(ratio))
+
 
         # Grab numbers and convert from strings
         self.op_rev = parseNumber(row[map[OP_REV]])
@@ -158,6 +165,7 @@ class Company(object):
         self.average_tenure = 0
         self.average_seats = 0
         self.board_size = 0
+        self.multi_500 = 0
 
         self.directors = []
         self.cp_score = 0
@@ -169,13 +177,22 @@ class Company(object):
         tenure_sum = 0
         seats_sum = 0
         salary_sum = 0
+
+
         self.board_size = len(self.directors)
         for d in self.directors:
             tenure_sum += d.tenure
             seats_sum += d.num_boards
+            if len(d.companies) > 1:
+                # A director at this company is on multiple boards is this sample
+                self.multi_500 += len(d.companies)-1
+                # print d.name + ' : ' + str(self.multi_500) + ' : ' + str (len(d.companies))
+
 
         self.average_tenure =  tenure_sum / self.board_size
         self.average_seats =  seats_sum / self.board_size
+
+        multi500 = 0
 
         self.calcCPScore()
 
@@ -184,7 +201,7 @@ class Company(object):
         seats_delta = abs(self.average_seats - TARGET_BOARD_OTHER_SEATS)
         tenure_delta = abs(self.average_tenure - TARGET_BOARD_TENURE)
         size_delta = abs(self.board_size - TARGET_BOARD_SIZE)
-        self.cp_score = seats_delta + 0.5*tenure_delta + 0.3*size_delta
+        self.cp_score = 0.5*seats_delta + 0.5*tenure_delta + 0.3*size_delta - 0.5*self.multi_500
 
     def getCSVRow(self):
         dirs = ""
@@ -202,7 +219,8 @@ class Company(object):
             self.average_tenure,
             self.average_seats,
             self.sector,
-            self.cp_score,
+            self.multi_500,
+            self.CARG5,
             dirs
 
             # self.exchange,
@@ -249,7 +267,7 @@ def main():
         fieldnames = [
             'Company', 'Score', 'Ticker', 'Op_Rev', 'State',
             'Num_Employees', 'Market_Cap', 'AVG_Tenure', 'AVG_Seats',
-            'Sector', 'CP_Score', 'Directors']
+            'Sector', 'Other_500', 'CARG5', 'Directors']
         writer = csv.writer(bd_csv)
         writer.writerow(fieldnames)
 
