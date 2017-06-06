@@ -3,6 +3,10 @@ import csv
 print "Dance Boogie Wonderland!"
 
 
+TARGET_BOARD_SIZE = 10
+TARGET_BOARD_TENURE = 8
+TARGET_BOARD_OTHER_SEATS = 4
+
 NAME                = "Company name"
 TICKER              = "Ticker symbol"
 CITY                = "City"
@@ -36,6 +40,7 @@ PROFIT_MARGIN_5     = "Profit margin % Year - 5"
 TOTAL_CASH_0        = "Total Cash from Operating Activities m USD Last avail. yr"
 TOTAL_CASH_1        = "Total Cash from Operating Activities m USD Year - 1"
 TOTAL_CASH_5        = "Total Cash from Operating Activities m USD Year - 5"
+SECTOR              = 'BvD major sector'
 
 HEADER_LIST = [
   NAME,
@@ -71,11 +76,12 @@ HEADER_LIST = [
   TOTAL_CASH_0,
   TOTAL_CASH_1,
   TOTAL_CASH_5,
+  SECTOR
 ]
+
 
 def parseNumber(s):
     if s != 'n.a.':
-        print s
         return float(s.replace(',', ''))
 
     return -1
@@ -98,17 +104,31 @@ class Director(object):
     def __init__(self, row, map):
         self.name = row[map[DIRECTOR_NAME]]
         self.id = row[map[DIRECTOR_ID]]
-        self.start_date = row[map[DIRECTOR_START]]
         self.gender = row[map[DIRECTOR_GENDER]]
         self.age = row[map[DIRECTOR_AGE]]
         self.nation = row[map[DIRECTOR_NATION]]
         self.comp = row[map[DIRECTOR_COMP]]
         self.num_boards = row[map[DIRECTOR_NUM_BOARD]]
+        if self.num_boards != '':
+            self.num_boards = int(self.num_boards)
+        else:
+            self.num_boards = 0
+
+        self.start_date = row[map[DIRECTOR_START]]
+        self.tenure = self.calcTenure(self.start_date)
+
 
         self.companies = []
 
     def addCompany(self, comp):
         self.companies.append(comp)
+
+    def calcTenure(self, start):
+        tokens = start.split('/')
+        year = tokens[-1]
+        if year == '':
+            year = 2017
+        return 2017 - int(year)
 
     def isMultiTechDirector(self):
         return len(companies) > 1
@@ -122,6 +142,7 @@ class Company(object):
         self.ticker = row[map[TICKER]]
         self.state = row[map[STATE]]
         self.exchange = row[map[EXCHANGE]]
+        self.sector = row[map[SECTOR]]
         self.num_shareholders = row[map[NUM_SHAREHOLDERS]]
         self.num_subsidiaries = row[map[NUM_SUBSIDIARIES]]
         self.woman_owned = row[map[WOMAN_OWNED]] == "Yes"
@@ -133,14 +154,37 @@ class Company(object):
         self.market_cap = parseNumber(row[map[MARKET_CAP]])
         self.employees = parseNumber(row[map[EMPLOYEES]])
 
+        # Values to be Calculated Later
+        self.average_tenure = 0
+        self.average_seats = 0
+        self.board_size = 0
+
         self.directors = []
         self.cp_score = 0
 
     def addDirector(self, director):
         self.directors.append(director)
 
+    def analyze(self):
+        tenure_sum = 0
+        seats_sum = 0
+        salary_sum = 0
+        self.board_size = len(self.directors)
+        for d in self.directors:
+            tenure_sum += d.tenure
+            seats_sum += d.num_boards
+
+        self.average_tenure =  tenure_sum / self.board_size
+        self.average_seats =  seats_sum / self.board_size
+
+        self.calcCPScore()
+
     def calcCPScore(self):
-        pass
+        # Weight Asspects of Boards
+        seats_delta = abs(self.average_seats - TARGET_BOARD_OTHER_SEATS)
+        tenure_delta = abs(self.average_tenure - TARGET_BOARD_TENURE)
+        size_delta = abs(self.board_size - TARGET_BOARD_SIZE)
+        self.cp_score = seats_delta + 0.5*tenure_delta + 0.3*size_delta
 
     def getCSVRow(self):
         dirs = ""
@@ -155,6 +199,10 @@ class Company(object):
             self.state,
             self.employees,
             self.market_cap,
+            self.average_tenure,
+            self.average_seats,
+            self.sector,
+            self.cp_score,
             dirs
 
             # self.exchange,
@@ -169,7 +217,8 @@ def main():
     companies = []
     directors = {}
 
-    with open('317-tech-raw.csv', 'rU') as bd_csv:
+    # with open('317-tech-raw.csv', 'rU') as bd_csv:
+    with open('317-SP.csv', 'rU') as bd_csv:
         bd_reader = csv.reader(bd_csv)
         headers = bd_reader.next()
         h_map = mapHeaders(headers)
@@ -199,12 +248,13 @@ def main():
 
         fieldnames = [
             'Company', 'Score', 'Ticker', 'Op_Rev', 'State',
-            'Num_Employees', 'Market_Cap', 'Directors']
+            'Num_Employees', 'Market_Cap', 'AVG_Tenure', 'AVG_Seats',
+            'Sector', 'CP_Score', 'Directors']
         writer = csv.writer(bd_csv)
         writer.writerow(fieldnames)
 
         for c in companies:
-            c.calcCPScore()
+            c.analyze()
             c_csv = c.getCSVRow()
             writer.writerow(c_csv)
 
