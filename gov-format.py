@@ -23,6 +23,7 @@ DIRECTOR_GENDER     = "DMC Gender"
 DIRECTOR_AGE        = "DMC Age"
 DIRECTOR_NATION     = "DMC Country/ies of nationality"
 DIRECTOR_COMP       = "DMC Compensation total USD"
+DIRECTOR_NUM_BOARD  = "DMC No of cos in which a current position is held"
 STOCK_PRICE_0       = "Market price - year end USD Last avail. yr"
 STOCK_PRICE_1       = "Market price - year end USD Year - 1"
 STOCK_PRICE_5       = "Market price - year end USD Year - 5"
@@ -57,6 +58,7 @@ HEADER_LIST = [
   DIRECTOR_AGE,
   DIRECTOR_NATION,
   DIRECTOR_COMP,
+  DIRECTOR_NUM_BOARD,
   STOCK_PRICE_0,
   STOCK_PRICE_1,
   STOCK_PRICE_5,
@@ -95,10 +97,18 @@ class Director(object):
         self.age = row[map[DIRECTOR_AGE]]
         self.nation = row[map[DIRECTOR_NATION]]
         self.comp = row[map[DIRECTOR_COMP]]
+        self.num_boards = row[map[DIRECTOR_NUM_BOARD]]
+
         self.companies = []
 
     def addCompany(self, comp):
         self.companies.append(comp)
+
+    def isMultiTechDirector(self):
+        return len(companies) > 1
+
+    def __str__(self):
+        return self.name
 
 class Company(object):
     def __init__(self, row, map):
@@ -110,13 +120,38 @@ class Company(object):
         self.market_cap = row[map[MARKET_CAP]]
         self.exchange = row[map[EXCHANGE]]
         self.num_shareholders = row[map[NUM_SHAREHOLDERS]]
-        self.NUM_SUBSIDIARIES = row[map[NUM_SUBSIDIARIES]]
+        self.num_subsidiaries = row[map[NUM_SUBSIDIARIES]]
         self.woman_owned = row[map[WOMAN_OWNED]] != "Yes"
         self.minority_owned = row[map[MINORITY_OWNED]] != "Yes"
         self.directors = []
+        self.cp_score = 0
 
     def addDirector(self, director):
         self.directors.append(director)
+
+    def calcCPScore(self):
+        pass
+
+    def getCSVRow(self):
+        dirs = ""
+        for d in self.directors:
+            dirs += str(d) + ", "
+        dirs = dirs[:-2]
+        return [
+            self.name,
+            self.cp_score,
+            self.ticker,
+            # self.op_rev,
+            # self.state,
+            # self.employees,
+            # self.market_cap,
+            # self.exchange,
+            # self.num_shareholders,
+            # self.num_subsidiaries,
+            # self.woman_owned,
+            # self.minority_owned,
+            dirs
+        ]
 
 
 def main():
@@ -138,16 +173,27 @@ def main():
             director = None
             if d_id in directors:
                 director = directors[d_id]
-                print "multi found"
             else:
                 director = Director(row, h_map)
                 directors[d_id] = director
 
             director.addCompany(company)
+            company.addDirector(director)
 
 
-    print len(directors)
 
+    print "Total Directors:" + str(len(directors))
+
+    with open('317-tech-ready.csv', 'w') as bd_csv:
+
+        fieldnames = ['Company', 'Score', 'Ticker', 'Directors']
+        writer = csv.writer(bd_csv)
+        writer.writerow(fieldnames)
+
+        for c in companies:
+            c.calcCPScore()
+            c_csv = c.getCSVRow()
+            writer.writerow(c_csv)
 
 
 
