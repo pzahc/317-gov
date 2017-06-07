@@ -252,13 +252,13 @@ class Company(object):
         ]
 
 
-def main():
+def convertCSV(filename):
+
     companies = []
     directors = {}
 
-    # with open('317-tech-raw.csv', 'rU') as bd_csv:
-    # with open('317-SP.csv', 'rU') as bd_csv:
-    with open('317-MCapUS.csv', 'rU') as bd_csv:
+    fileCSV = filename + '.csv'
+    with open(fileCSV, 'rU') as bd_csv:
         bd_reader = csv.reader(bd_csv)
         headers = bd_reader.next()
         h_map = mapHeaders(headers)
@@ -279,13 +279,10 @@ def main():
 
             director.addCompany(company)
             company.addDirector(director)
-
-
-
     print "Total Directors:" + str(len(directors))
 
-    # with open('317-tech-comps.csv', 'w') as bd_csv:
-    with open('317-mcap-comps.csv', 'w') as bd_csv:
+    outCSV = filename + '-comps.csv'
+    with open(outCSV, 'w') as bd_csv:
 
         fieldnames = [
             'Company', 'Score', 'Ticker', 'Op_Rev', 'State',
@@ -301,6 +298,9 @@ def main():
             c_csv = c.getCSVRow()
             writer.writerow(c_csv)
 
+def main():
+    convertCSV('317-MCapUS')
+    convertCSV('317-SP')
 
 
 

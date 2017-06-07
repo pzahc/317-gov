@@ -12,8 +12,8 @@ require(VGAM)
 
 
 
-data  <- read.csv("317-sp500-comps.csv", stringsAsFactors=FALSE)
-# data  <- read.csv("317-mcap-comps.csv", stringsAsFactors=FALSE)
+data  <- read.csv("317-SP-comps.csv", stringsAsFactors=FALSE)
+# data  <- read.csv("317-MCapUS-comps.csv", stringsAsFactors=FALSE)
 attach(data)
 
 # Create Output File
