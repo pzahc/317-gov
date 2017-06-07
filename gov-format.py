@@ -3,9 +3,9 @@ import csv
 print "Dance Boogie Wonderland!"
 
 
-TARGET_BOARD_SIZE = 10
-TARGET_BOARD_TENURE = 8
-TARGET_BOARD_OTHER_SEATS = 4
+TARGET_BOARD_SIZE = 7
+TARGET_BOARD_TENURE = 6
+TARGET_BOARD_OTHER_SEATS = 3
 
 NAME                = "Company name"
 TICKER              = "Ticker symbol"
@@ -110,7 +110,7 @@ class Director(object):
         self.comp = row[map[DIRECTOR_COMP]]
         self.num_boards = row[map[DIRECTOR_NUM_BOARD]]
         if self.num_boards != '':
-            self.num_boards = int(self.num_boards)
+            self.num_boards = int(parseNumber(self.num_boards))
         else:
             self.num_boards = 0
 
@@ -143,11 +143,12 @@ class Company(object):
         self.state = row[map[STATE]]
         self.exchange = row[map[EXCHANGE]]
         self.sector = row[map[SECTOR]]
-        self.num_shareholders = row[map[NUM_SHAREHOLDERS]]
-        self.num_subsidiaries = row[map[NUM_SUBSIDIARIES]]
         self.woman_owned = row[map[WOMAN_OWNED]] == "Yes"
         self.minority_owned = row[map[MINORITY_OWNED]] == "Yes"
 
+
+        self.num_shareholders = int(parseNumber(row[map[NUM_SHAREHOLDERS]]))
+        self.num_subsidiaries = int(parseNumber(row[map[NUM_SUBSIDIARIES]]))
 
         # Finacials
         self.assets = parseNumber(row[map[ASSETS_0]])
@@ -158,8 +159,11 @@ class Company(object):
         self.stock0 = parseNumber(row[map[STOCK_PRICE_0]])
         self.stock1 = parseNumber(row[map[STOCK_PRICE_1]])
         self.stock5 = parseNumber(row[map[STOCK_PRICE_5]])
-        ratio = self.stock0/self.stock5
-        self.CARG5 = (pow(abs(ratio), 1.0/5.0)-1.0)*(ratio/abs(ratio))
+        if self.stock5 != 0 and self.stock0 != 0:
+            ratio = self.stock0/self.stock5
+            self.CARG5 = (pow(abs(ratio), 1.0/5.0)-1.0)*(ratio/abs(ratio))
+        else:
+            self.CARG5 = 0.0
 
 
         # Grab numbers and convert from strings
@@ -201,8 +205,6 @@ class Company(object):
         self.average_seats =  seats_sum / self.board_size
         self.average_prime_seats =  prime_seat_sum / self.board_size
 
-        multi500 = 0
-
         self.calcCPScore()
 
     def calcCPScore(self):
@@ -237,6 +239,9 @@ class Company(object):
             self.assets,
             self.total_cash,
             self.profit_margin,
+            self.num_shareholders,
+            self.num_subsidiaries,
+            self.board_size,
             dirs
 
             # self.exchange,
@@ -252,7 +257,8 @@ def main():
     directors = {}
 
     # with open('317-tech-raw.csv', 'rU') as bd_csv:
-    with open('317-SP.csv', 'rU') as bd_csv:
+    # with open('317-SP.csv', 'rU') as bd_csv:
+    with open('317-MCapUS.csv', 'rU') as bd_csv:
         bd_reader = csv.reader(bd_csv)
         headers = bd_reader.next()
         h_map = mapHeaders(headers)
@@ -278,13 +284,15 @@ def main():
 
     print "Total Directors:" + str(len(directors))
 
-    with open('317-tech-comps.csv', 'w') as bd_csv:
+    # with open('317-tech-comps.csv', 'w') as bd_csv:
+    with open('317-mcap-comps.csv', 'w') as bd_csv:
 
         fieldnames = [
             'Company', 'Score', 'Ticker', 'Op_Rev', 'State',
             'Num_Employees', 'Market_Cap', 'AVG_Tenure', 'AVG_Seats',
             'Sector', 'AVG_Prime', 'CARG5', 'M_OWNED', 'W_OWNED',
-            'Assets', 'Total_Cash', 'Profit_Margin', 'Directors']
+            'Assets', 'Total_Cash', 'Profit_Margin', 'Num_Share', 'Num_Subs',
+            'Board_Size', 'Directors']
         writer = csv.writer(bd_csv)
         writer.writerow(fieldnames)
 

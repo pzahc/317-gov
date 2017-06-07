@@ -12,7 +12,8 @@ require(VGAM)
 
 
 
-data  <- read.csv("317-tech-comps.csv", stringsAsFactors=FALSE)
+data  <- read.csv("317-sp500-comps.csv", stringsAsFactors=FALSE)
+# data  <- read.csv("317-mcap-comps.csv", stringsAsFactors=FALSE)
 attach(data)
 
 # Create Output File
@@ -21,7 +22,7 @@ if (!dir.exists("img")) {
   dir.create("img")
 }
 
-dependents  <- list("AVG_Tenure", "AVG_Seats", "Score")
+dependents  <- list("Board_Size", "AVG_Tenure", "AVG_Seats", "AVG_Prime", "Score")
 for (d in dependents) {
   write("#################################", file = "Reults.txt", append = TRUE)
   write(d, file = "Reults.txt", append = TRUE)
@@ -30,7 +31,7 @@ for (d in dependents) {
   depen <- eval(as.name(d))
   reg <- lm(depen ~ Market_Cap + State + Op_Rev + Num_Employees + Sector +
                CARG5 + M_OWNED + W_OWNED + Num_Employees + Assets + Total_Cash +
-               Profit_Margin)
+               Profit_Margin + Num_Share + Num_Subs)
   s <- summary(reg)
   capture.output(s, file = "Reults.txt", append = TRUE)
   write("\n\n", file = "Reults.txt", append = TRUE)
@@ -45,6 +46,5 @@ for (d in dependents) {
   abline(a=0,b=0)
   dev.off()
 }
-
 
 detach(data)
