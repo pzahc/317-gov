@@ -161,9 +161,9 @@ class Company(object):
         self.stock5 = parseNumber(row[map[STOCK_PRICE_5]])
         if self.stock5 != 0 and self.stock0 != 0:
             ratio = self.stock0/self.stock5
-            self.CARG5 = (pow(abs(ratio), 1.0/5.0)-1.0)*(ratio/abs(ratio))
+            self.CAGR5 = (pow(abs(ratio), 1.0/5.0)-1.0)*(ratio/abs(ratio))
         else:
-            self.CARG5 = 0.0
+            self.CAGR5 = 0.0
 
 
         # Grab numbers and convert from strings
@@ -195,11 +195,11 @@ class Company(object):
             seats_sum += d.num_boards
 
             prime_seat_sum += len(d.companies)
-            # if len(d.companies) > 1:
-            #     # A director at this company is on multiple boards is this sample
-            #     self.multi_500 += len(d.companies)-1
-            #     # print d.name + ' : ' + str(self.multi_500) + ' : ' + str (len(d.companies))
+            # if len(d.companies) > 5:
+            #     print len(d.companies)
+            #     print d.name
 
+            
 
         self.average_tenure =  tenure_sum / self.board_size
         self.average_seats =  seats_sum / self.board_size
@@ -214,7 +214,10 @@ class Company(object):
         size_delta = abs(self.board_size - TARGET_BOARD_SIZE)
 
 
-        self.cp_score = 0.5*seats_delta + 0.5*tenure_delta + 0.3*size_delta - self.average_prime_seats
+        self.cp_score = 0.5*seats_delta + 0.5*tenure_delta + 0.3*size_delta - min(4, self.average_prime_seats)
+        # if self.cp_score < -100:
+        #     print str(self.cp_score) +': '+ str((seats_delta, tenure_delta, size_delta, self.average_prime_seats))
+
 
     def getCSVRow(self):
         dirs = ""
@@ -233,7 +236,7 @@ class Company(object):
             self.average_seats,
             self.sector,
             self.average_prime_seats,
-            self.CARG5,
+            self.CAGR5,
             self.minority_owned,
             self.woman_owned,
             self.assets,
@@ -243,12 +246,6 @@ class Company(object):
             self.num_subsidiaries,
             self.board_size,
             dirs
-
-            # self.exchange,
-            # self.num_shareholders,
-            # self.num_subsidiaries,
-            # self.woman_owned,
-            # self.minority_owned,
         ]
 
 
@@ -266,6 +263,9 @@ def convertCSV(filename):
         company = None
         for row in bd_reader:
             if row[1] != "":
+                if company != None and len(company.directors) < 2:
+                    companies.remove(company)
+
                 company = Company(row, h_map)
                 companies.append(company)
 
@@ -287,7 +287,7 @@ def convertCSV(filename):
         fieldnames = [
             'Company', 'Score', 'Ticker', 'Op_Rev', 'State',
             'Num_Employees', 'Market_Cap', 'AVG_Tenure', 'AVG_Seats',
-            'Sector', 'AVG_Prime', 'CARG5', 'M_OWNED', 'W_OWNED',
+            'Sector', 'AVG_Prime', 'CAGR5', 'M_OWNED', 'W_OWNED',
             'Assets', 'Total_Cash', 'Profit_Margin', 'Num_Share', 'Num_Subs',
             'Board_Size', 'Directors']
         writer = csv.writer(bd_csv)
